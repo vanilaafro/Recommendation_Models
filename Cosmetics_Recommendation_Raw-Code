@@ -1,0 +1,127 @@
+import pandas as pd
+import numpy as np
+import math
+
+df = pd.read_csv("Copy of Cosmetics.csv")
+
+df.head()
+
+#Resetting the transaction column as the data index but avoiding it for the main data (reference purposes)
+df_copy = df.copy()
+df_copy.set_index("Trans. ", inplace=True) #dont forget the space in "Trans. "
+# df_copy.columns
+df_copy.head()
+
+def euc(x, y):
+  return math.dist(x,y) #Getting Eucladian distance between points
+
+x = df_copy.iloc[1]   #Customer 1 
+y = df_copy.iloc[2]   #Customer 2
+euc(x,y)
+
+#Testing tenets of the Eucladian distance for the Recommendation system
+x = df_copy.iloc[10]
+y = df_copy.iloc[11]
+
+print("Property One:", 10 * sum(x) == sum(10 * x))
+
+print("Property Two:", sum(x-y) <= sum(x)+sum(y))
+
+print("Property Three:", sum(x) >= 0 )
+
+If a customer that walks into a store to buy lip liner will almost always buy lip gloss to go with it. Because this is the ideal standard of shopping generally (that is, this is what most customers do), a would recommend a customer buying lip gloss to buy a lip liner as well and vice versa. This is with the justification that humans are relatively homogenious in nature so similar customers would like similar items.
+
+If customer A buys three books titled "Ant", "Bee" and "Cat" and customer B buys three books titled "Ant", "Bee" and "Dog", they have similar taste in books and as such, customer B will be recommended the "Cat" book and customer A will be recommended "Dog" book.
+
+#Getting the distances of any 10 different customers against each other
+col_dist = [] 
+for i in range(5):
+  for j in range(5):
+    if i != j:      # To avoid getting 
+      x = df_copy.iloc[i] 
+      y = df_copy.iloc[j] 
+      distance = euc(x,y)
+      col_dist.append(distance)
+      print("Difference between",i, "and",j, "is:", col_dist)
+
+col_dist #The final output is the minimum distance
+
+col_dist = [] #Distance/norm of each customer
+for i in range(10):  #The higher the range, the better the recommedation system but 1000 takes too long
+  for j in range(10):
+    if i != j:
+      x = df_copy.iloc[i] #first customer
+      y = df_copy.iloc[j] #second customer
+      distance = euc(x,y)   #distance between two customers
+      col_dist.append(distance)
+      if distance >0 and distance < 2: #The minimum distance possible in the data
+        df = pd.DataFrame((x-y)) #This returns recommended items in booleans for one customer
+        df.reset_index(inplace = True)
+        print(df)
+
+col_dist = []
+recommendations = []
+
+# Loop through each customer
+for i in range(100):
+    count_dict = dict()
+
+    # Calculate distances and count common purchases
+    for j in range(100):
+        if i != j:
+            x = df_copy.iloc[i]
+            y = df_copy.iloc[j]
+            distance = euc(x, y)
+
+            # Append distances to col_dist if needed
+            col_dist.append(distance)
+
+            for key, val in x.to_dict().items():
+                if val == 0:
+                    count_dict[key] = 0
+
+            if distance > 0 and distance < 2:
+                for key, val in y.to_dict().items():
+                    if key in count_dict.keys() and val == 1:
+                        count_dict[key] += 1
+
+    # Recommend top products for the current customer
+    recommend = sorted(count_dict, key=count_dict.get, reverse=True)[:3]
+    recommendations.append(recommend)
+    print('Customer no', i, 'recommendation', recommend)
+
+# Now col_dist contains all the distances, and recommendations contains top product recommendations for each customer.
+
+
+import pandas as pd
+
+# Assuming 'recommendations' is a list of lists where each inner list contains top product recommendations for each customer
+# For example: recommendations = [['product1', 'product2', 'product3'], ['product4', 'product5', 'product6'], ...]
+
+# Create a DataFrame from the recommendations list
+recommendations_df = pd.DataFrame(recommendations, columns=['Recommendation 1', 'Recommendation 2', 'Recommendation 3'])
+
+# Print the recommendations table
+print(recommendations_df)
+
+
+recommendations_df
+
+import matplotlib.pyplot as plt
+
+# Assuming 'recommendations' is a list of lists where each inner list contains top product recommendations for each customer
+
+# Custom function to create bar charts for each customer's recommendations
+def plot_recommendations(customer_id, recommended_products):
+    plt.figure(figsize=(8, 6))
+    plt.bar(range(len(recommended_products)), recommended_products, align='center', alpha=0.7)
+    plt.xlabel('Recommendation Rank')
+    plt.ylabel('Product')
+    plt.title(f'Recommended Products for Customer {customer_id}')
+    plt.xticks(range(len(recommended_products)), recommended_products, rotation='vertical')
+    plt.tight_layout()
+    plt.show()
+
+# Loop through customers and plot their recommendations
+for i, recommendations in enumerate(recommendations):
+    plot_recommendations(i, recommendations)
